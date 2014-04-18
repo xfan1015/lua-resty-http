@@ -203,6 +203,10 @@ local function receivebody(sock, headers, nreqt)
                         return nil,err
                     end
                 end
+            --modify by fan--s
+            else
+		return nil,err
+            --modify by fan--e
             end
         end
     elseif headers["content-length"] ~= nil and tonumber(headers["content-length"]) >= 0 then
