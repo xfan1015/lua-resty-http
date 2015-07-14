@@ -5,8 +5,9 @@ _VERSION = '0.2'
 -- constants
 -- connection timeout in seconds
 local TIMEOUT = 60
--- default port for document retrieval
+-- default ports for document retrieval
 local PORT = 80
+local SSL_PORT = 443
 -- user agent field sent in request
 local USERAGENT = 'resty.http/' .. _VERSION
 
@@ -81,7 +82,13 @@ local function adjustrequest(reqt)
     -- explicit components override url
     for i,v in pairs(reqt) do nreqt[i] = v end
 
-    if nreqt.port == "" then nreqt.port = 80 end
+    if nreqt.port == nil or nreqt.port == "" then
+        if nreqt.scheme == "https" then
+            nreqt.port = SSL_PORT
+        else
+            nreqt.port = PORT
+        end
+    end
 
     -- compute uri if user hasn't overriden
     nreqt.uri = reqt.uri or adjusturi(nreqt)
@@ -298,7 +305,14 @@ function request(self, reqt)
     end
     
     h = h .. '\r\n' -- close headers
-    
+    -- @modify: add ssl support
+    if nreqt.scheme == 'https' then
+    	local sess, err = sock:sslhandshake();
+    	if err then
+        	return nil, err;
+	end
+    end
+
     bytes, err = sock:send(reqline .. h)
     if err then
         sock:close()
